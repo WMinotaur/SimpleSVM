@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from sklearn.datasets import load_breast_cancer
 from sklearn.decomposition import PCA
 from sklearn.utils import resample
+from sklearn.preprocessing import StandardScaler
 
 def generate_training_data_binary(num=1):
     """
@@ -21,8 +22,12 @@ def generate_training_data_binary(num=1):
     X = data.data
     y = data.target
     
+    # Scale data for better SVM performance/meaningful distances
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+    
     pca = PCA(n_components=2)
-    X_pca = pca.fit_transform(X)
+    X_pca = pca.fit_transform(X_scaled)
 
 
     y_mapped = np.where(y == 0, 1, -1)

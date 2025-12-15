@@ -3,14 +3,17 @@ import matplotlib.pyplot as plt
 from .data import *
 
 
-def svm_train_brute(training_data):
-    """
-    Trains a linear SVM using a brute-force approach to find the optimal hyperplane.
 
-    Iterates through pairs and triplets of support vectors to maximize the margin.
+def svm_train_brute(training_data, C=50):
+    """
+    Trains a linear SVM using a brute-force approach to find the optimal hyperplane
+    by minimizing a Cost Function (Soft Margin).
+
+    Cost = 0.5 * (1 / margin)^2 + C * TotalError
 
     Args:
         training_data (np.ndarray): Training data of shape (N, 3) with [x, y, label].
+        C (float): Penalty parameter. Higher C means more penalty for misclassification.
 
     Returns:
         tuple: (w, b, support_vectors) where w is the weight vector, b is the bias,
@@ -21,8 +24,18 @@ def svm_train_brute(training_data):
     positive = training_data[training_data[:, 2] == 1]
     negative = training_data[training_data[:, 2] == -1]
 
-    margin = -9999999
+    min_cost = float('inf')
     s_last, w_last, b_last = None, None, None
+
+    def update_best(w_cand, b_cand, sv_cand):
+        nonlocal min_cost, s_last, w_last, b_last
+        current_cost = compute_cost(training_data, w_cand, b_cand, C)
+        
+        if current_cost < min_cost:
+            min_cost = current_cost
+            s_last = sv_cand
+            w_last = w_cand
+            b_last = b_cand
 
     for pos in positive:
         for neg in negative:
@@ -30,12 +43,9 @@ def svm_train_brute(training_data):
             w = np.array(pos[:-1] - neg[:-1])
             w = w / np.sqrt((w[0] * w[0] + w[1] * w[1]))
             b = -1 * (w[0] * mid_point[0] + w[1] * mid_point[1])
+            
+            update_best(w, b, np.array([pos, neg]))
 
-            if margin <= compute_margin(training_data, w, b):
-                margin = compute_margin(training_data, w, b)
-                s_last = np.array([pos, neg])
-                w_last = w
-                b_last = b
     for pos in positive:
         for pos1 in positive:
             for neg in negative:
@@ -49,11 +59,7 @@ def svm_train_brute(training_data):
                     w = w / np.sqrt(w.dot(w))
                     b = -1 * (w.dot(mid_point))
 
-                    if margin <= compute_margin(training_data, w, b):
-                        margin = compute_margin(training_data, w, b)
-                        s_last = np.array([pos, pos1, neg])
-                        w_last = w
-                        b_last = b
+                    update_best(w, b, np.array([pos, pos1, neg]))
 
     for neg in negative:
         for neg1 in negative:
@@ -67,11 +73,8 @@ def svm_train_brute(training_data):
                     w = w / np.sqrt((w[0] * w[0] + w[1] * w[1]))
                     b = -1 * (w[0] * mid_point[0] + w[1] * mid_point[1])
 
-                    if margin <= compute_margin(training_data, w, b):
-                        margin = compute_margin(training_data, w, b)
-                        s_last = np.array([pos, neg, neg1])
-                        w_last = w
-                        b_last = b
+                    update_best(w, b, np.array([pos, neg, neg1]))
+
     return w_last, b_last, s_last
 
 
@@ -90,31 +93,45 @@ def distance_point_to_hyperplane(pt, w, b):
     return np.abs(((pt[0] * w[0]) + (pt[1] * w[1]) + b) / (np.sqrt((w[0] * w[0]) + (w[1] * w[1]))))
 
 
-def compute_margin(data, w, b):
+def compute_cost(data, w, b, C=50):
     """
-    Computes the margin of the hyperplane for the given dataset.
+    Computes the Cost Function for the hyperplane.
+    
+    Cost = 0.5 * (1 / Margin)^2 + C * TotalError
+    
+    Where:
+    - Margin is the min distance to correctly classified points.
+    - TotalError is sum of distances of misclassified points.
 
-    The margin is the minimum distance from any data point to the hyperplane.
-    Returns 0 if the hyperplane does not correctly classify all points.
-
-    Args:
+    args:
         data (np.ndarray): Dataset.
         w (np.ndarray): Weight vector.
         b (float): Bias term.
+        C (float): Penalty parameter.
 
     Returns:
-        float: The computed margin, or 0 if misclassification occurs.
+        float: The computed Cost.
     """
-    margin = distance_point_to_hyperplane(data[0, :-1], w, b)
-
+    total_error = 0
+    count_misclassified = 0
+    min_dist = float('inf')
+    
     for pt in data:
-        distance = distance_point_to_hyperplane(pt[:-1], w, b)
-        if distance < margin:
-            margin = distance_point_to_hyperplane(pt[:-1], w, b)
-        if svm_test_brute(w, b, pt) != pt[2]:
-            return 0
+        dist = distance_point_to_hyperplane(pt[:-1], w, b)
+        predicted = svm_test_brute(w, b, pt)
+        
+        if predicted != pt[2]:
+            total_error += dist
+            count_misclassified += 1
+        else:
+            if dist < min_dist:
+                min_dist = dist
+    final_total_error = total_error + (count_misclassified * min_dist)
 
-    return margin
+    margin_cost = 0.5 * (1 / min_dist)**2
+    penalty_cost = C * final_total_error
+      
+    return margin_cost + penalty_cost
 
 
 def svm_test_brute(w, b, x):
