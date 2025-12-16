@@ -31,6 +31,14 @@ src/svm_project.egg-info/dependency_links.txt
 src/svm_project.egg-info/not-zip-safe
 src/svm_project.egg-info/requires.txt
 src/svm_project.egg-info/top_level.txt
+src/svm_project/__pycache__/__init__.cpython-313.pyc
+src/svm_project/__pycache__/compare.cpython-313.pyc
+src/svm_project/__pycache__/data.cpython-313.pyc
+src/svm_project/__pycache__/svm.cpython-313.pyc
 tests/conftest.py
 tests/test_skeleton.py
 tests/test_svm_demo.py
+tests/test_svm_project.py
+tests/__pycache__/conftest.cpython-313-pytest-9.0.1.pyc
+tests/__pycache__/test_skeleton.cpython-313-pytest-9.0.1.pyc
+tests/__pycache__/test_svm_demo.cpython-313-pytest-9.0.1.pyc
