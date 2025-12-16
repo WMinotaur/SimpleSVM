@@ -30,15 +30,13 @@ pip install -e .
 
 ## Usage
 
-To see the SVM in action and compare it with Scikit-learn, you can run the comparison script:
+To see the SVM in action and compare it with Scikit-learn, you can run the comparison script directly from your terminal:
 
-```python
-from svm_project.compare import compare_binary
-
-compare_binary()
+```bash
+python src/svm_project/compare.py
 ```
 
-This will:
+This command will:
 1.  Generate a random dataset.
 2.  Train the custom SVM.
 3.  Train a Scikit-learn SVM on the same data.
